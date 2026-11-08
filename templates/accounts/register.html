@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Đăng ký · Hệ thống quản lý chi tiêu{% endblock %}
+{% block content %}
+<div class="card auth-card">
+  <h1>Tạo túi tiền của bạn</h1>
+  <p class="lede">Hệ thống sẽ tạo sẵn vài danh mục thu/chi để bạn dùng ngay.</p>
+  <form method="post" class="stack">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <div class="field">
+        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+        {{ field }}
+        {{ field.errors }}
+        {% if field.help_text %}<div class="helptext">{{ field.help_text }}</div>{% endif %}
+      </div>
+    {% endfor %}
+    <button type="submit">Tạo tài khoản</button>
+  </form>
+  <p class="muted">Đã có tài khoản? <a href="{% url 'accounts:login' %}">Đăng nhập</a></p>
+</div>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Hệ thống quản lý chi tiêu{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="{% if user.is_authenticated %}{% url 'dashboard:home' %}{% else %}{% url 'accounts:login' %}{% endif %}">
+        <strong>Hệ thống quản lý chi tiêu</strong>
+        <span>Quản lý chi tiêu</span>
+      </a>
+      {% if user.is_authenticated %}
+      <nav class="nav">
+        <a href="{% url 'dashboard:home' %}" {% if request.resolver_match.app_name == 'dashboard' %}aria-current="page"{% endif %}>Tổng quan</a>
+        <a href="{% url 'expenses:transaction_list' %}" {% if request.resolver_match.url_name == 'transaction_list' %}aria-current="page"{% endif %}>Giao dịch</a>
+        <a href="{% url 'expenses:category_list' %}" {% if request.resolver_match.url_name == 'category_list' %}aria-current="page"{% endif %}>Danh mục</a>
+        <a href="{% url 'expenses:note_list' %}" {% if 'note_' in request.resolver_match.url_name %}aria-current="page"{% endif %}>Ghi chú</a>
+        <span class="nav-user">{{ user.username }}</span>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button class="linkish" type="submit">Đăng xuất</button>
+        </form>
+      </nav>
+      {% endif %}
+    </header>
+
+    {% if messages %}
+      <ul class="messages" aria-live="polite">
+        {% for message in messages %}
+          <li class="{{ message.tags }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </div>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

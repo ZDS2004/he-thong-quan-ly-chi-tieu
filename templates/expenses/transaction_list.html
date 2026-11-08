@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Giao dịch · Hệ thống quản lý chi tiêu{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1>Giao dịch</h1>
+    <p class="lede">Lọc theo tháng, loại thu/chi hoặc danh mục.</p>
+  </div>
+  <a class="btn" href="{% url 'expenses:transaction_create' %}">Thêm giao dịch</a>
+</div>
+
+<form class="filter card" method="get">
+  <div>
+    <label for="transaction-year">Năm</label>
+    <input id="transaction-year" type="number" name="year" value="{{ year }}">
+  </div>
+  <div>
+    <label for="transaction-month">Tháng</label>
+    <input id="transaction-month" type="number" name="month" min="1" max="12" value="{{ month }}">
+  </div>
+  <div>
+    <label for="transaction-kind">Loại</label>
+    <select id="transaction-kind" name="kind">
+      <option value="">Tất cả</option>
+      {% for value, label in kind_choices %}
+        <option value="{{ value }}" {% if kind == value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label for="transaction-category">Danh mục</label>
+    <select id="transaction-category" name="category">
+      <option value="">Tất cả</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}" {% if selected_category == c.id|stringformat:"s" %}selected{% endif %}>{{ c }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button type="submit">Lọc</button>
+</form>
+
+<div class="card">
+  <div class="table-wrap"><table>
+    <thead>
+      <tr><th>Ngày</th><th>Danh mục</th><th>Số tiền</th><th>Ghi chú</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for t in transactions %}
+        <tr>
+          <td>{{ t.occurred_on|date:"d/m/Y" }}</td>
+          <td><span class="dot" style="background:{{ t.category.color }}"></span>{{ t.category.name }}</td>
+          <td class="{% if t.category.kind == 'income' %}up{% else %}down{% endif %}">
+            {% if t.category.kind == 'income' %}+{% else %}-{% endif %}{{ t.amount|vnd }}
+          </td>
+          <td class="muted">{{ t.note|default:"—" }}</td>
+          <td class="actions">
+            <a href="{% url 'expenses:transaction_update' t.pk %}">Sửa</a>
+            <a href="{% url 'expenses:transaction_delete' t.pk %}">Xóa</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5" class="muted">Tháng này chưa có giao dịch.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% if is_paginated %}
+    <div class="pagination">
+      {% if page_obj.has_previous %}<a href="?year={{ year }}&month={{ month }}&kind={{ kind }}&category={{ selected_category }}&page={{ page_obj.previous_page_number }}">Trang trước</a>{% endif %}
+      Trang {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}
+      {% if page_obj.has_next %}<a href="?year={{ year }}&month={{ month }}&kind={{ kind }}&category={{ selected_category }}&page={{ page_obj.next_page_number }}">Trang sau</a>{% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

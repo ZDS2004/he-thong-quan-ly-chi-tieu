@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}Tổng quan · Hệ thống quản lý chi tiêu{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Tháng {{ summary.month }}/{{ summary.year }}</h1>
+  <p>Nhìn nhanh tổng thu, tổng chi và số dư trong tháng.</p>
+  <form class="filter" method="get">
+    <div>
+      <label for="dashboard-year">Năm</label>
+      <input id="dashboard-year" type="number" name="year" value="{{ year }}">
+    </div>
+    <div>
+      <label for="dashboard-month">Tháng</label>
+      <input id="dashboard-month" type="number" name="month" min="1" max="12" value="{{ month }}">
+    </div>
+    <button type="submit" class="btn">Xem</button>
+    <a class="btn btn-ghost" href="{% url 'expenses:transaction_create' %}">+ Giao dịch</a>
+  </form>
+</section>
+
+<section class="grid stats">
+  <article class="card">
+    <div class="stat-label">Thu vào</div>
+    <div class="stat-value up">{{ summary.income|vnd }}</div>
+  </article>
+  <article class="card">
+    <div class="stat-label">Chi ra</div>
+    <div class="stat-value down">{{ summary.expense|vnd }}</div>
+  </article>
+  <article class="card">
+    <div class="stat-label">Còn lại</div>
+    <div class="stat-value">{{ summary.balance|vnd }}</div>
+  </article>
+</section>
+
+<section class="grid charts">
+  <article class="card">
+    <h2>Chi theo ngày</h2>
+    {% if summary.expense %}
+      <canvas id="dailyChart" height="140"></canvas>
+    {% else %}
+      <p class="muted">Chưa có khoản chi trong tháng này.</p>
+    {% endif %}
+  </article>
+  <article class="card">
+    <h2>Chi theo danh mục</h2>
+    {% if summary.by_category %}
+      <canvas id="catChart" height="140"></canvas>
+    {% else %}
+      <p class="muted">Thêm giao dịch chi để thấy biểu đồ.</p>
+    {% endif %}
+  </article>
+</section>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{{ chart_daily|json_script:"daily-chart-data" }}
+{{ chart_categories|json_script:"category-chart-data" }}
+<script>
+  const daily = JSON.parse(document.getElementById("daily-chart-data").textContent);
+  const categories = JSON.parse(document.getElementById("category-chart-data").textContent);
+  const formatMoney = (value) => new Intl.NumberFormat("vi-VN").format(value);
+
+  const dailyCanvas = document.getElementById("dailyChart");
+  if (dailyCanvas) {
+    new Chart(dailyCanvas, {
+      type: "line",
+      data: {
+        labels: daily.labels,
+        datasets: [{
+          label: "Chi (VNĐ)",
+          data: daily.values,
+          borderColor: "#c45c26",
+          backgroundColor: "rgba(196,92,38,.15)",
+          fill: true,
+          tension: 0.3,
+        }]
+      },
+      options: {
+        plugins: { legend: { display: false } },
+        scales: { y: { ticks: { callback: formatMoney } } }
+      }
+    });
+  }
+  const categoryCanvas = document.getElementById("catChart");
+  if (categoryCanvas) {
+    new Chart(categoryCanvas, {
+      type: "doughnut",
+      data: {
+        labels: categories.labels,
+        datasets: [{ data: categories.values, backgroundColor: categories.colors }]
+      },
+      options: { plugins: { legend: { position: "bottom" } } }
+    });
+  }
+</script>
+{% endblock %}
